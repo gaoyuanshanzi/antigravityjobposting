@@ -9,9 +9,10 @@ interface SidebarProps {
   selectedCities: string[];
   onCityToggle: (city: string) => void;
   onStart: () => void;
+  isReady?: boolean;
 }
 
-export function Sidebar({ selectedCities, onCityToggle, onStart }: SidebarProps) {
+export function Sidebar({ selectedCities, onCityToggle, onStart, isReady = true }: SidebarProps) {
   const [expandedCountries, setExpandedCountries] = useState<string[]>(['KR']);
 
   const toggleCountry = (countryId: string) => {
@@ -23,7 +24,7 @@ export function Sidebar({ selectedCities, onCityToggle, onStart }: SidebarProps)
   };
 
   return (
-    <aside className="w-72 bg-gray-900 border-r border-gray-800 flex flex-col h-screen fixed left-0 top-0 text-gray-200">
+    <aside className="w-72 bg-gray-900 border-r border-gray-800 flex flex-col h-screen fixed left-0 top-0 text-gray-200 z-10">
       <div className="p-6 border-b border-gray-800">
         <h1 className="text-xl font-bold text-white bg-clip-text text-transparent bg-gradient-to-r from-indigo-400 to-purple-400">
           Job Aggregator
@@ -81,10 +82,10 @@ export function Sidebar({ selectedCities, onCityToggle, onStart }: SidebarProps)
       <div className="p-4 border-t border-gray-800">
         <button
           onClick={onStart}
-          disabled={selectedCities.length === 0}
+          disabled={!isReady}
           className="w-full py-3 px-4 bg-indigo-600 hover:bg-indigo-700 disabled:bg-gray-800 disabled:text-gray-500 text-white rounded-lg font-medium shadow-lg transition-all transform active:scale-[0.98] focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 focus:ring-offset-gray-900"
         >
-          Start Search ({selectedCities.length})
+          {isReady ? `Start Search (${selectedCities.length})` : 'Enter API Key & Select Cities'}
         </button>
       </div>
     </aside>

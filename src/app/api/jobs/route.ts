@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { JobPosting, CITIES } from '@/lib/data';
 import { getSession } from '@/lib/session';
+import { GoogleGenAI } from '@google/genai';
 
 // Helper to determine language based on country
 const getLanguage = (city: string) => {
@@ -10,32 +11,6 @@ const getLanguage = (city: string) => {
   return 'English';
 };
 
-// Mock data generator
-const generateMockJobs = (city: string): JobPosting[] => {
-  const language = getLanguage(city);
-  const count = Math.floor(Math.random() * 5) + 3; // 3 to 7 jobs per city
-  
-  const jobs: JobPosting[] = [];
-  
-  for (let i = 0; i < count; i++) {
-    jobs.push({
-      id: `${city}-${i}-${Date.now()}`,
-      title: language === 'Korean' ? `수석 소프트웨어 엔지니어 - ${i + 1}` : 
-             language === 'Japanese' ? `シニアソフトウェアエンジニア - ${i + 1}` : 
-             `Senior Software Engineer - ${i + 1}`,
-      company: `Tech Corp ${city} ${String.fromCharCode(65 + i)}`,
-      location: city,
-      language: language,
-      date: new Date(Date.now() - Math.floor(Math.random() * 10000000000)).toISOString().split('T')[0],
-      description: language === 'Korean' ? `${city}에서 혁신적인 프로젝트를 이끌어갈 뛰어난 엔지니어를 찾고 있습니다. 최신 기술 스택을 활용하여 확장 가능하고 안정적인 시스템을 설계 및 구축하게 됩니다.` :
-                   language === 'Japanese' ? `${city}で革新的なプロジェクトをリードする優秀なエンジニアを探しています。最新の技術スタックを活用して、スケーラブルで安定したシステムを設計・構築します。` :
-                   `We are looking for an exceptional engineer to lead innovative projects in ${city}. You will design and build scalable and reliable systems using the latest tech stack.`
-    });
-  }
-  
-  return jobs;
-};
-
 export async function POST(request: Request) {
   const session = await getSession();
   if (!session) {
@@ -43,26 +18,69 @@ export async function POST(request: Request) {
   }
 
   try {
-    const { cities } = await request.json();
+    const { cities, apiKey } = await request.json();
     
     if (!cities || !Array.isArray(cities)) {
       return NextResponse.json({ error: 'Invalid cities parameter' }, { status: 400 });
     }
-
-    // Simulate API delay
-    await new Promise(resolve => setTimeout(resolve, 800));
-
-    let allJobs: JobPosting[] = [];
     
-    cities.forEach(city => {
-      allJobs = [...allJobs, ...generateMockJobs(city)];
+    if (!apiKey) {
+      return NextResponse.json({ error: 'Gemini API Key is required' }, { status: 400 });
+    }
+
+    const ai = new GoogleGenAI({ apiKey });
+    
+    // Process cities in parallel using Promise.all to be faster
+    const promises = cities.map(async (city) => {
+      const language = getLanguage(city);
+      const prompt = `
+        You are a job posting aggregator. I need you to find or generate realistic, up-to-date job postings for the city of ${city}.
+        Please provide exactly 3 realistic job postings in ${language}.
+        
+        The response MUST be a valid JSON array of objects.
+        Each object MUST match this interface precisely:
+        {
+          "id": string (unique identifier like "${city}-1"),
+          "title": string,
+          "company": string,
+          "location": string (MUST be ${city}),
+          "description": string (3-4 sentences detailing role),
+          "language": string (MUST be ${language}),
+          "date": string (ISO format YYYY-MM-DD, e.g. "2023-10-25")
+        }
+        
+        ONLY return the JSON array. Do not include markdown code blocks like \`\`\`json. Just the raw JSON string.
+      `;
+
+      try {
+        const response = await ai.models.generateContent({
+          model: 'gemini-2.5-flash',
+          contents: prompt,
+          config: {
+            temperature: 0.7,
+            responseMimeType: "application/json",
+          }
+        });
+
+        const text = response.text || "[]";
+        // Attempt to parse JSON. We requested raw JSON.
+        const parsed = JSON.parse(text) as JobPosting[];
+        return parsed;
+      } catch (err) {
+        console.error(`Failed to generate jobs for ${city}`, err);
+        return [];
+      }
     });
+
+    const results = await Promise.all(promises);
+    let allJobs: JobPosting[] = results.flat();
 
     // Sort by date descending
     allJobs.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
 
     return NextResponse.json({ jobs: allJobs });
   } catch (error) {
+    console.error('API Route Error:', error);
     return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
   }
 }

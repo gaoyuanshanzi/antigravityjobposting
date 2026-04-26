@@ -13,6 +13,7 @@ export default function Dashboard() {
   const [jobs, setJobs] = useState<JobPosting[]>([]);
   const [loading, setLoading] = useState(false);
   const [isEmailModalOpen, setIsEmailModalOpen] = useState(false);
+  const [geminiApiKey, setGeminiApiKey] = useState('');
   const router = useRouter();
 
   const handleCityToggle = (city: string) => {
@@ -22,19 +23,25 @@ export default function Dashboard() {
   };
 
   const fetchJobs = async () => {
-    if (selectedCities.length === 0) return;
+    if (selectedCities.length === 0 || !geminiApiKey) return;
     
     setLoading(true);
     try {
       const res = await fetch('/api/jobs', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ cities: selectedCities }),
+        body: JSON.stringify({ cities: selectedCities, apiKey: geminiApiKey }),
       });
       const data = await res.json();
-      setJobs(data.jobs || []);
+      if (res.ok) {
+        setJobs(data.jobs || []);
+      } else {
+        console.error('Failed to fetch jobs:', data.error);
+        alert(`Error: ${data.error}`);
+      }
     } catch (error) {
       console.error('Failed to fetch jobs', error);
+      alert('An unexpected error occurred while fetching jobs.');
     } finally {
       setLoading(false);
     }
@@ -52,6 +59,7 @@ export default function Dashboard() {
         selectedCities={selectedCities} 
         onCityToggle={handleCityToggle} 
         onStart={fetchJobs} 
+        isReady={selectedCities.length > 0 && geminiApiKey.trim().length > 0}
       />
 
       <main className="flex-1 ml-72 flex flex-col h-screen overflow-hidden">
@@ -64,6 +72,13 @@ export default function Dashboard() {
           </div>
 
           <div className="flex items-center gap-4">
+            <input 
+              type="password" 
+              placeholder="Enter Gemini API Key..." 
+              value={geminiApiKey}
+              onChange={(e) => setGeminiApiKey(e.target.value)}
+              className="px-4 py-2 bg-gray-800 border border-gray-700 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 w-64 text-white"
+            />
             <button
               onClick={() => setIsEmailModalOpen(true)}
               disabled={jobs.length === 0}
