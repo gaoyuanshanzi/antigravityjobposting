@@ -30,12 +30,12 @@ Optimized for local development and Vercel zero-config deployment.
    ADMIN_PASSWORD="123jesus"
 
    # Nodemailer setup (Update these with real credentials for sending emails)
-   EMAIL_SERVER_USER="your-email@gmail.com"
+   EMAIL_SERVER_USER="your-email@naver.com"
    EMAIL_SERVER_PASSWORD="your-app-password"
-   SMTP_HOST="smtp.gmail.com"
+   SMTP_HOST="smtp.naver.com"
    SMTP_PORT="465"
    ```
-   *Note: For Gmail, use an "App Password", not your normal Google password.*
+   *Note: For Naver, ensure you have enabled SMTP/IMAP in your Naver Mail settings and use your password (or App Password if 2FA is enabled).*
 
 3. **Start the Development Server**
    ```bash

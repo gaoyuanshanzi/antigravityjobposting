@@ -21,7 +21,7 @@ export async function POST(request: Request) {
 
     // Configure nodemailer transporter
     const transporter = nodemailer.createTransport({
-      host: process.env.SMTP_HOST || 'smtp.gmail.com',
+      host: process.env.SMTP_HOST || 'smtp.naver.com',
       port: Number(process.env.SMTP_PORT) || 465,
       secure: true,
       auth: {
