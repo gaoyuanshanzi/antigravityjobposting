@@ -1,36 +1,66 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Job Posting Aggregator Service
 
-## Getting Started
+A full-stack web application built with Next.js App Router, designed for aggregating and emailing job postings.
+Optimized for local development and Vercel zero-config deployment.
 
-First, run the development server:
+## Features
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
+- **Authentication**: Secured dashboard with session-cookie based login.
+- **Dynamic UI**: Sidebar for multi-selecting top 10 cities across KR, JP, US.
+- **Localized Content**: Displays job postings in the local language (Korean, Japanese, English).
+- **Email Integration**: Send selected job postings to multiple recipients via Nodemailer.
+- **Vercel Ready**: Full compatibility with Vercel's zero-config deployment architecture.
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## Requirements
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+- Node.js 18+
+- npm (or yarn/pnpm)
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## Local Development Setup
 
-## Learn More
+1. **Install dependencies**
+   ```bash
+   npm install
+   ```
 
-To learn more about Next.js, take a look at the following resources:
+2. **Configure Environment Variables**
+   Create a `.env.local` file in the root directory (one has been pre-generated for you):
+   ```env
+   ADMIN_ID="admin"
+   ADMIN_PASSWORD="123jesus"
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+   # Nodemailer setup (Update these with real credentials for sending emails)
+   EMAIL_SERVER_USER="your-email@gmail.com"
+   EMAIL_SERVER_PASSWORD="your-app-password"
+   SMTP_HOST="smtp.gmail.com"
+   SMTP_PORT="465"
+   ```
+   *Note: For Gmail, use an "App Password", not your normal Google password.*
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+3. **Start the Development Server**
+   ```bash
+   npm run dev
+   ```
 
-## Deploy on Vercel
+4. **Access the Application**
+   Open [http://localhost:3000](http://localhost:3000) in your browser.
+   Login using the credentials defined in `.env.local` (default: `admin` / `123jesus`).
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+## Vercel Deployment
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+This project is optimized for deployment on Vercel.
+
+1. Push your code to a GitHub repository. (Make sure `.env.local` is **NOT** committed).
+2. Import the project into Vercel.
+3. In the Vercel project settings, go to **Environment Variables** and add all the variables from your `.env.local` file.
+4. Deploy! Vercel will automatically detect the Next.js framework and configure the build settings.
+
+## Project Structure
+
+- `/src/app/page.tsx` - Main Dashboard Layout
+- `/src/app/login/page.tsx` - Login Screen
+- `/src/app/api/auth/` - Authentication API Routes
+- `/src/app/api/jobs/` - Mock Job Data Generation API
+- `/src/app/api/email/` - Nodemailer Integration API
+- `/src/components/` - React Components (Sidebar, JobCard, EmailModal)
+- `/src/lib/` - Shared Utilities (Session Auth, Mock Data)
